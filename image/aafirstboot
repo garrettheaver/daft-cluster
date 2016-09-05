@@ -1,0 +1,30 @@
+#! /bin/sh
+### BEGIN INIT INFO
+# Provides:          aafirstboot
+# Required-Start:    $remote_fs $all
+# Required-Stop:
+# Default-Start:     2 3 4 5 S
+# Default-Stop:
+# Short-Description: First boot system setup
+### END INIT INFO
+
+PATH=/sbin:/usr/sbin:/bin:/usr/bin
+
+case "$1" in
+  start)
+
+    if [ -f /media/boot/onboot ]; then
+      /media/boot/onboot
+    fi
+
+    ;;
+
+  stop)
+    ;;
+
+  *)
+    echo "Usage: $0 start|stop" >&2
+    exit 3
+    ;;
+esac
+

@@ -1,0 +1,28 @@
+#! /bin/sh
+PATH=/sbin:/usr/sbin:/bin:/usr/bin
+
+. /lib/init/vars.sh
+. /lib/lsb/init-functions
+
+if [ -d /var.old ]; then
+
+  # make a swap fs on the swap partition
+  log_daemon_msg "Removing /var.old" &&
+    rm -rf /var.old
+
+fi
+
+# update base packages
+log_daemon_msg "Updating system" &&
+  apt-get update &&
+  apt-get -y upgrade
+
+# install python for ansible
+log_daemon_msg "Installing python" &&
+  apt-get -y install python
+
+# cleanup
+rm $0 &&
+  sync &&
+  reboot
+

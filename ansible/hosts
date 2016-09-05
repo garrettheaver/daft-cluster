@@ -1,0 +1,9 @@
+punk40 ansible_host=192.168.192.40
+punk41 ansible_host=192.168.192.41
+punk42 ansible_host=192.168.192.42
+punk43 ansible_host=192.168.192.43
+punk44 ansible_host=192.168.192.44
+
+[all:vars]
+ansible_user=root
+
