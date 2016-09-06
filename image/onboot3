@@ -1,5 +1,6 @@
 #! /bin/sh
 PATH=/sbin:/usr/sbin:/bin:/usr/bin
+DEBIAN_FRONTEND="noninteractive"
 
 . /lib/init/vars.sh
 . /lib/lsb/init-functions

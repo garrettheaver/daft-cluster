@@ -1,0 +1,4 @@
+#! /bin/sh
+PATH=/sbin:/usr/sbin:/bin:/usr/bin
+sed -i 's/setenv nographics "0"/setenv nographics "1"/g' /media/boot/boot.ini
+
