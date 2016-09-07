@@ -1,6 +1,6 @@
 #! /bin/sh
 PATH=/sbin:/usr/sbin:/bin:/usr/bin
-DEBIAN_FRONTEND="noninteractive"
+export DEBIAN_FRONTEND="noninteractive"
 
 . /lib/init/vars.sh
 . /lib/lsb/init-functions
@@ -13,14 +13,14 @@ if [ -d /var.old ]; then
 
 fi
 
-# update base packages
-log_daemon_msg "Updating system" &&
-  apt-get update &&
-  apt-get -y upgrade
-
 # install python for ansible
 log_daemon_msg "Installing python" &&
+  apt-get update &&
   apt-get -y install python
+
+# ensure nographics in server mode
+log_daemon_msg "Updating nographics" &&
+  sed -i 's/setenv nographics "0"/setenv nographics "1"/g' /media/boot/boot.ini
 
 # cleanup
 rm $0 &&

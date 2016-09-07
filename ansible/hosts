@@ -4,6 +4,15 @@ punk42 ansible_host=192.168.192.42
 punk43 ansible_host=192.168.192.43
 punk44 ansible_host=192.168.192.44
 
+[masters]
+punk40
+
+[workers]
+punk41
+punk42
+punk43
+punk44
+
 [all:vars]
 ansible_user=root
 
