@@ -9,24 +9,15 @@ p2_start=`fdisk -l /dev/mmcblk0 | grep mmcblk0p2 | awk '{print $2}'`
 blk0_end=$((`fdisk -l /dev/mmcblk0 | grep Disk | grep sectors | awk '{printf $7}'` - 1024))
 p3_start=$(($blk0_end - (4000000000 / 512)))
 
-# resize p2 as 4 gig short of full disk, then add p3 as 4 gig partition
+# resize p2 as 4 gig short of full disk, then add p3 as 4 gig partition (for swap)
 printf "p\nd\n2\nn\np\n2\n$p2_start\n$(($p3_start - 1))\nn\np\n3\n$p3_start\n$blk0_end\np\nw" | fdisk /dev/mmcblk0 &>> /var/log/fdisk.log
 
-if [ -b /dev/sda ]; then
-
-  # add a primary partition on sda as the entire disk
-  printf "p\ng\nn\n1\n\n\n\n\np\nw" | fdisk /dev/sda &>> /var/log/fdisk.log
-
-fi
-
+# create ssh host keys if none exits
 [ ! -f /etc/ssh/ssh_host_rsa_key ] && dpkg-reconfigure openssh-server
 
 # setup the hostname to match the last part of the ip
 ip=`ifconfig eth0 | grep 'inet addr:' | cut -d: -f2 | awk '{print $1}' | cut -d. -f4`
 echo "punk$ip" > /etc/hostname
-
-# ensure swap only occurs as a matter of last resort
-echo 'vm.swappiness = 1' >> /etc/sysctl.conf
 
 # move to stage 2
 mv /media/boot/onboot2 $0 &&

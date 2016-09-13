@@ -8,21 +8,18 @@ PATH=/sbin:/usr/sbin:/bin:/usr/bin
 log_daemon_msg "Resizing /" &&
   resize2fs /dev/mmcblk0p2
 
-if [ -b /dev/sda1 ]; then
+# setup all usb disks
+for disk in `ls /dev/sd[a-z]`; do
 
-  # create an ext4 filesystem
-  log_daemon_msg "Formatting /dev/sda1" &&
-    mkfs.ext4 -F /dev/sda1
+  # setup a single partition on the disk
+  log_daemon_msg "Partitioning ${disk}" &&
+    printf "p\ng\nn\n1\n\n\n\n\np\nw" | fdisk ${disk} &>> /var/log/fdisk.log
 
-  # move the /var partition on to it
-  log_daemon_msg "Moving /var to /dev/sda1" &&
-    mv /var /var.old &&
-    mkdir /var &&
-    mount /dev/sda1 /var &&
-    echo "/dev/sda1 /var ext4 errors=remount-ro,noatime 0 2" >> /etc/fstab &&
-    cp -dpr /var.old/* /var
+  # create an xfs filesystem
+  log_daemon_msg "Formatting ${disk}1" &&
+    mkfs.xfs -f "${disk}1"
 
-fi
+done
 
 if [ -b /dev/mmcblk0p3 ]; then
 
@@ -30,8 +27,9 @@ if [ -b /dev/mmcblk0p3 ]; then
   log_daemon_msg "Formatting Swap" &&
     mkswap /dev/mmcblk0p3
 
-  # set up swap as perm fstab entry
+  # set up as perm fstab entry with low swappiness
   echo "/dev/mmcblk0p3 none swap defaults 0 0" >> /etc/fstab &&
+    echo 'vm.swappiness = 1' >> /etc/sysctl.conf &&
     swapon /dev/mmcblk0p3
 
 fi

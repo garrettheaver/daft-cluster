@@ -13,6 +13,11 @@ punk42
 punk43
 punk44
 
+[monitors]
+punk40
+punk42
+punk44
+
 [all:vars]
 ansible_user=root
 
