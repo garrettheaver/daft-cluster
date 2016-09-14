@@ -20,7 +20,8 @@ log_daemon_msg "Reinstalling ntp..." &&
 
 # all cluster nodes require the following packages
 log_daemon_msg "Installing curl, ceph, docker, git and python..." &&
-  apt-get -y install curl ceph ceph-common docker.io git-core python
+  apt-get -y install curl ceph ceph-common lxc aufs-tools \
+  cgroup-lite apparmor docker.io git-core python
 
 # ceph targets missing from install
 log_daemon_msg "Fixing ceph targets..." &&

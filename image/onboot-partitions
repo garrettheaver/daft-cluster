@@ -1,12 +1,9 @@
 #! /bin/sh
 PATH=/sbin:/usr/sbin:/bin:/usr/bin
+export DEBIAN_FRONTEND="noninteractive"
 
 . /lib/init/vars.sh
 . /lib/lsb/init-functions
-
-# mount /tmp as a tempfs
-log_daemon_msg "Mounting /tmp using tempfs..." &&
-  echo "tmpfs /tmp tmpfs noatime,nosuid,nodev,noexec,mode=1777,size=256M 0 0" >> /etc/fstab
 
 # resize the / partition
 if [ -b /dev/mmcblk0p2 ]; then
@@ -14,44 +11,22 @@ if [ -b /dev/mmcblk0p2 ]; then
     resize2fs /dev/mmcblk0p2
 fi
 
+# mount /tmp as a tempfs
+log_daemon_msg "Mounting /tmp using tempfs..." &&
+  echo "tmpfs /tmp tmpfs noatime,nosuid,nodev,noexec,mode=1777,size=256M 0 0" >> /etc/fstab
+
+# install xfs filesystem
+log_daemon_msg "Installing xfsprogs..." &&
+  apt-get update &&
+  apt-get -y install xfsprogs
+
 # rest of sd card
 if [ -b /dev/mmcblk0p3 ]; then
   log_daemon_msg "Formatting xfs on /dev/mmcblk0p3..." &&
     mkfs.xfs -f /dev/mmcblk0p3
 fi
 
-# usb for essentials
-if [ -b /dev/sda ]; then
-
-  # 2x 4gb partitions on sda1, sda2 and the rest as sda3
-  printf "p\ng\nn\n1\n\n+4000M\nn\n2\n\n+4000M\nn\n3\n\n\np\nw" | fdisk /dev/sda
-
-  # make a swap fs on the swap partition
-  log_daemon_msg "Formatting swap on /dev/sda1..." &&
-    mkswap /dev/sda1
-
-  # set up as perm fstab entry with low swappiness
-  log_daemon_msg "Adding swap to fstab..." &&
-    echo 'vm.swappiness = 1' >> /etc/sysctl.conf &&
-    echo "/dev/sda1 none swap defaults 0 0" >> /etc/fstab &&
-    swapon /dev/sda1
-
-  # create an ext4 filesystem
-  log_daemon_msg "Formatting ext4 on /dev/sda2..." &&
-    mkfs.ext4 -F /dev/sda2
-
-  log_daemon_msg "Moving /var to /dev/sda2..." &&
-    mv /var /var.old && mkdir /var &&
-    echo "/dev/sda2 /var ext4 errors=remount-ro,noatime 0 2" >> /etc/fstab &&
-    mount /dev/sda2 /var && cp -dpr /var.old/* /var
-
-  # create an xfs filesystem
-  log_daemon_msg "Formatting xfs on /dev/sda3..." &&
-    mkfs.xfs -f /dev/sda3
-
-fi
-
-# setup all other usb disks
+# setup secondary usb disks
 for disk in `ls /dev/sd[b-z]`; do
 
   # setup a single partition on the disk
@@ -63,6 +38,39 @@ for disk in `ls /dev/sd[b-z]`; do
     mkfs.xfs -f "${disk}1"
 
 done
+
+# primary usb disk
+if [ -b /dev/sda ]; then
+
+  # small partitions on sda1, sda2 and the rest as sda3
+  printf "p\ng\nn\n1\n\n+4G\nn\n2\n\n+8G\nn\n3\n\n\np\nw" | fdisk /dev/sda
+
+  # make a swap fs on the swap partition
+  log_daemon_msg "Formatting swap on /dev/sda1..." &&
+    mkswap /dev/sda1
+
+  # create an ext4 filesystem
+  log_daemon_msg "Formatting ext4 on /dev/sda2..." &&
+    mkfs.ext4 -F /dev/sda2
+
+  # create an xfs filesystem
+  log_daemon_msg "Formatting xfs on /dev/sda3..." &&
+    mkfs.xfs -f /dev/sda3
+
+  # set up as perm fstab entry with low swappiness
+  UUID=`blkid /dev/sda1 | awk '{print $2}' | sed 's/"//g'`
+  log_daemon_msg "Adding swap to fstab..." &&
+    echo 'vm.swappiness = 1' >> /etc/sysctl.conf &&
+    echo "$UUID none swap defaults 0 0" >> /etc/fstab &&
+    swapon /dev/sda1
+
+  UUID=`blkid /dev/sda2 | awk '{print $2}' | sed 's/"//g'`
+  log_daemon_msg "Moving /var to /dev/sda2..." &&
+    mv /var /var.old && mkdir /var &&
+    echo "$UUID /var ext4 errors=remount-ro,noatime 0 2" >> /etc/fstab &&
+    mount /dev/sda2 /var && cp -dpr /var.old/* /var
+
+fi
 
 # move to next stage
 mv /media/boot/onboot-packages $0 &&

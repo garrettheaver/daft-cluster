@@ -4,13 +4,6 @@ PATH=/sbin:/usr/sbin:/bin:/usr/bin
 . /lib/init/vars.sh
 . /lib/lsb/init-functions
 
-# ok, its the very first boot, we need to resize the disk.
-p2_start=`fdisk -l /dev/mmcblk0 | grep mmcblk0p2 | awk '{print $2}'`
-
-# resize p2 as the entire disk
-log_daemon_msg "Repartitioning /dev/mmcblk0..." &&
-  printf "p\nd\n2\nn\np\n2\n$p2_start\n\np\nw" | fdisk /dev/mmcblk0
-
 # create ssh host keys if none exits
 [ ! -f /etc/ssh/ssh_host_rsa_key ] && dpkg-reconfigure openssh-server
 
@@ -18,6 +11,11 @@ log_daemon_msg "Repartitioning /dev/mmcblk0..." &&
 ip=`ifconfig eth0 | grep 'inet addr:' | cut -d: -f2 | awk '{print $1}' | cut -d. -f4`
 log_daemon_msg "Setting hostname to punk${ip}..." &&
   echo "punk$ip" > /etc/hostname
+
+# resize p2 as 16gigs and p3 as the rest
+p2_start=`fdisk -l /dev/mmcblk0 | grep mmcblk0p2 | awk '{print $2}'`
+log_daemon_msg "Repartitioning /dev/mmcblk0..." &&
+  printf "p\nd\n2\nn\np\n2\n$p2_start\n+16G\nn\np\n3\n\n\np\nw" | fdisk /dev/mmcblk0
 
 # move to next stage
 mv /media/boot/onboot-partitions $0 &&
