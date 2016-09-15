@@ -1,0 +1,10 @@
+#! /bin/sh
+PATH=/sbin:/usr/sbin:/bin:/usr/bin
+REPO="https://raw.githubusercontent.com/garrettheaver/daft.cluster"
+
+. /lib/init/vars.sh
+. /lib/lsb/init-functions
+
+log_daemon_msg "Updating /etc/hosts..." &&
+  curl -s "$REPO/master/config/hosts" > /etc/hosts
+
