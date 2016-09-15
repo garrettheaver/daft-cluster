@@ -1,0 +1,11 @@
+127.0.0.1	  localhost
+::1		      localhost ip6-localhost ip6-loopback
+ff02::1		  ip6-allnodes
+ff02::2		  ip6-allrouters
+
+192.168.192.40  punk40
+192.168.192.41  punk41
+192.168.192.42  punk42
+192.168.192.43  punk43
+192.168.192.44  punk44
+
