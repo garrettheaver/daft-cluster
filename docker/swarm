@@ -11,13 +11,13 @@ OPTS="--restart=unless-stopped"
 if [ "$1" = "manager" ]; then
 
   docker volume create --name swarm-manage
-  docker run -d ${OPTS} --name swarm-manage -v swarm-manange:/.swarm -p 4000:4000 \
+  docker run -d ${OPTS} --name swarm-manage -v swarm-manage:/.swarm -p 4000:4000 \
     hypriot/rpi-swarm manage -H :4000 --replication --advertise ${ETH0}:4000 consul://${DKR0}:8500
 
 else
 
   docker volume create --name swarm-worker
-  docker run -d ${OPTS} --name swarm-worker -v swarm-manange:/.swarm \
+  docker run -d ${OPTS} --name swarm-worker -v swarm-worker:/.swarm \
     hypriot/rpi-swarm join --advertise=${ETH0}:2375 consul://${DKR0}:8500
 
 fi
