@@ -9,6 +9,10 @@ punk40
 punk42
 punk44
 
+[swarm-managers]
+punk41
+punk43
+
 [consul-clients]
 punk41
 punk43
