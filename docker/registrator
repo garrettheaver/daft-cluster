@@ -1,0 +1,11 @@
+#!/bin/bash
+
+docker run -d \
+  -h registrator \
+  -v /var/run/docker.sock:/tmp/docker.sock \
+  --restart=unless-stopped \
+  --net=host \
+  --name registrator \
+  sheenhx/armhf-registrator:latest \
+  consul://127.0.0.1:8500
+
