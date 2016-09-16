@@ -7,5 +7,7 @@ docker run -d \
   --net=host \
   --name registrator \
   sheenhx/armhf-registrator:latest \
+  -cleanup \
+  -resync 60 \
   consul://127.0.0.1:8500
 
