@@ -1,5 +1,11 @@
 #!/bin/bash
 
+function ip() {
+  ifconfig $1 | grep -o -e "inet addr:[0-9\.]\+" | cut -d: -f2
+}
+
+ETH0=$(ip "eth0")
+
 docker run -d \
   -h registrator \
   -v /var/run/docker.sock:/tmp/docker.sock \
@@ -8,6 +14,6 @@ docker run -d \
   --name registrator \
   sheenhx/armhf-registrator:latest \
   -cleanup \
-  -resync 60 \
-  consul://127.0.0.1:8500
+  -resync 300 \
+  consul://${ETH0}:8500
 

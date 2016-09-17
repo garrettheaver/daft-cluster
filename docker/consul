@@ -7,16 +7,27 @@ function ip() {
 ETH0=$(ip "eth0")
 DKR0=$(ip "docker0")
 
-DKR_OPTS="-d \
-  --net=host \
+DOCKER_OPTS="-d \
+  -v consul:/data \
+  -p ${ETH0}:8300:8300 \
+  -p ${ETH0}:8301:8301 \
+  -p ${ETH0}:8301:8301/udp \
+  -p ${ETH0}:8302:8302 \
+  -p ${ETH0}:8302:8302/udp \
+  -p ${ETH0}:8400:8400 \
+  -p ${ETH0}:8500:8500 \
+  -p ${DKR0}:53:8600 \
+  -p ${DKR0}:53:8600/udp \
   --restart=unless-stopped \
-  --name consul \
-  -v consul:/data"
+  --name consul"
 
-CON_OPTS="-data-dir /data \
-  -bind ${ETH0} \
-  -client=0.0.0.0 \
-  -dc=daft"
+CONSUL_IMG="hypriot/rpi-consul:0.6.4"
+CONSUL_OPTS="-dc=daft \
+  -data-dir=/data \
+  -recursor=8.8.8.8 \
+  -recursor=8.8.4.4 \
+  -advertise=${ETH0} \
+  -client=0.0.0.0"
 
 # create a named data volume
 docker volume create --name consul
@@ -26,22 +37,22 @@ if [ "$1" = "server" ]; then
   if [[ $# -eq 1 ]]; then
 
     # first server in the cluster
-    docker run ${DKR_OPTS} -e 'CONSUL_LOCAL_CONFIG={"skip_leave_on_interrupt": true}' \
-      hypriot/rpi-consul:0.6.4 agent -server ${CON_OPTS} -ui -ui-dir /ui -bootstrap-expect=3
+    docker run ${DOCKER_OPTS} -e 'CONSUL_LOCAL_CONFIG={"skip_leave_on_interrupt": true}' \
+      ${CONSUL_IMG} agent -server ${CONSUL_OPTS} -ui -ui-dir=/ui -bootstrap-expect=3
 
   else
 
     # additional server nodes
-    docker run ${DKR_OPTS} -e 'CONSUL_LOCAL_CONFIG={"skip_leave_on_interrupt": true}' \
-      hypriot/rpi-consul:0.6.4 agent -server ${CON_OPTS} -ui -ui-dir /ui -retry-join=$2
+    docker run ${DOCKER_OPTS} -e 'CONSUL_LOCAL_CONFIG={"skip_leave_on_interrupt": true}' \
+      ${CONSUL_IMG} agent -server ${CONSUL_OPTS} -ui -ui-dir=/ui -retry-join=$2
 
   fi
 
 else
 
   # basic client node
-  docker run ${DKR_OPTS} -e 'CONSUL_LOCAL_CONFIG={"leave_on_terminate": true}' \
-    hypriot/rpi-consul:0.6.4 agent ${CON_OPTS} -retry-join=$2
+  docker run ${DOCKER_OPTS} -e 'CONSUL_LOCAL_CONFIG={"leave_on_terminate": true}' \
+    ${CONSUL_IMG} agent ${CONSUL_OPTS} -retry-join=$1
 
 fi
 
