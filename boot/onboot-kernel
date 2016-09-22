@@ -11,17 +11,21 @@ if ! [[ `uname -r` =~ $VERSION ]]; then
   # Updating the kernel and calling `reboot` causes the ODroid nodes to not
   # come back up by themselves. They will require a manual power cycle.
 
-  URL="https://s3-eu-west-1.amazonaws.com/daft.cluster/kernel-$VERSION.tar.gz"
+  URL="https://s3-eu-west-1.amazonaws.com/daft.cluster/kernel/kernel-$VERSION.tar.gz"
 
-  curl -s $URL | tar xvzf - -C /usr/src &&
+  log_daemon_msg "Updating kernel..." &&
+    curl -s $URL | tar xvzf - -C /usr/src &&
     cd /usr/src/kernel &&
     make modules_install &&
     cp -f arch/arm64/boot/Image /media/boot/ &&
     cp -f arch/arm64/boot/dts/meson64_odroidc2.dtb /media/boot/ &&
     cd /usr/src &&
-    rm -rf /usr/src/kernel &&
+    rm -rf /usr/src/kernel
+
+  # cleanup
+  rm $0 &&
     sync &&
-    reboot
+    shutdown -h now
 
 fi
 

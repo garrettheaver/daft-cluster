@@ -1,6 +1,5 @@
 #! /bin/sh
 PATH=/sbin:/usr/sbin:/bin:/usr/bin
-CEPH_REPO="https://raw.githubusercontent.com/ceph/ceph/master/systemd"
 export DEBIAN_FRONTEND="noninteractive"
 
 . /lib/init/vars.sh
@@ -19,22 +18,16 @@ log_daemon_msg "Reinstalling ntp..." &&
   apt-get -y install ntp
 
 # all cluster nodes require the following packages
-log_daemon_msg "Installing curl, ceph, docker, git and python..." &&
-  apt-get -y install curl ceph ceph-common lxc aufs-tools \
-  cgroup-lite apparmor docker.io git-core python
-
-# ceph targets missing from install
-log_daemon_msg "Fixing ceph targets..." &&
-  curl "$CEPH_REPO/ceph-mon.target" > /lib/systemd/system/ceph-mon.target &&
-  curl "$CEPH_REPO/ceph-mds.target" > /lib/systemd/system/ceph-mds.target &&
-  curl "$CEPH_REPO/ceph-osd.target" > /lib/systemd/system/ceph-osd.target
+log_daemon_msg "Installing essential packages..." &&
+  apt-get -y install lxc aufs-tools cgroup-lite apparmor docker.io \
+  curl git-core python dnsutils
 
 # ensure nographics in server mode
 log_daemon_msg "Updating nographics..." &&
   sed -i 's/setenv nographics "0"/setenv nographics "1"/g' /media/boot/boot.ini
 
-# cleanup
-rm $0 &&
+# move to next stage
+mv /media/boot/onboot-kernel $0 &&
   sync &&
   reboot
 
