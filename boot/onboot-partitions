@@ -13,37 +13,26 @@ fi
 
 # mount /tmp as a tempfs
 log_daemon_msg "Mounting /tmp using tempfs..." &&
-  echo "tmpfs /tmp tmpfs noatime,nosuid,nodev,noexec,mode=1777,size=256M 0 0" >> /etc/fstab
-
-# install xfs filesystem
-log_daemon_msg "Installing xfsprogs..." &&
-  apt-get update &&
-  apt-get -y install xfsprogs
+  echo "tmpfs /tmp tmpfs noatime,nosuid,nodev,noexec,mode=1777,size=512M 0 0" >> /etc/fstab
 
 # rest of sd card
 if [ -b /dev/mmcblk0p3 ]; then
-  log_daemon_msg "Formatting xfs on /dev/mmcblk0p3..." &&
-    mkfs.xfs -f /dev/mmcblk0p3
+
+  log_daemon_msg "Formatting ext4 on /dev/mmcblk0p3..." &&
+    mkfs.ext4 -F /dev/mmcblk0p3
+
+  UUID=`blkid /dev/mmcblk0p3 | awk '{print $2}' | sed 's/"//g'`
+  log_daemon_msg "Adding /dev/mmcblk0p3 to fstab..." &&
+    mkdir -p /var/local/backups &&
+    echo "$UUID /var/local/backups ext4 errors=remount-ro,noatime 0 2" >> /etc/fstab
+
 fi
-
-# setup secondary usb disks
-for disk in `ls /dev/sd[b-z]`; do
-
-  # setup a single partition on the disk
-  log_daemon_msg "Partitioning ${disk}..." &&
-    printf "p\ng\nn\n1\n\n\n\n\np\nw" | fdisk ${disk}
-
-  # create an xfs filesystem
-  log_daemon_msg "Formatting xfs on ${disk}1..." &&
-    mkfs.xfs -f "${disk}1"
-
-done
 
 # primary usb disk
 if [ -b /dev/sda ]; then
 
-  # small partitions on sda1, sda2 and the rest as sda3
-  printf "p\ng\nn\n1\n\n+4G\nn\n2\n\n+8G\nn\n3\n\n\np\nw" | fdisk /dev/sda
+  # small swap partition as sda1, rest as sda2
+  printf "p\ng\nn\n1\n\n+4G\nn\n2\n\n\np\nw" | fdisk /dev/sda
 
   # make a swap fs on the swap partition
   log_daemon_msg "Formatting swap on /dev/sda1..." &&
@@ -52,10 +41,6 @@ if [ -b /dev/sda ]; then
   # create an ext4 filesystem
   log_daemon_msg "Formatting ext4 on /dev/sda2..." &&
     mkfs.ext4 -F /dev/sda2
-
-  # create an xfs filesystem
-  log_daemon_msg "Formatting xfs on /dev/sda3..." &&
-    mkfs.xfs -f /dev/sda3
 
   # set up as perm fstab entry with low swappiness
   UUID=`blkid /dev/sda1 | awk '{print $2}' | sed 's/"//g'`
@@ -71,6 +56,19 @@ if [ -b /dev/sda ]; then
     mount /dev/sda2 /var && cp -dpr /var.old/* /var
 
 fi
+
+# setup secondary usb disks
+for disk in `ls /dev/sd[b-z]`; do
+
+  # setup a single partition on the disk
+  log_daemon_msg "Partitioning ${disk}..." &&
+    printf "p\ng\nn\n1\n\n\n\n\np\nw" | fdisk ${disk}
+
+  # create an ext4 filesystem
+  log_daemon_msg "Formatting ext4 on ${disk}1..." &&
+    mkfs.ext4 -F "${disk}1"
+
+done
 
 # move to next stage
 mv /media/boot/onboot-packages $0 &&

@@ -26,8 +26,12 @@ log_daemon_msg "Installing essential packages..." &&
 log_daemon_msg "Updating nographics..." &&
   sed -i 's/setenv nographics "0"/setenv nographics "1"/g' /media/boot/boot.ini
 
-# move to next stage
-mv /media/boot/onboot-kernel $0 &&
+# re-enable apt daily service
+log_daemon_msg "Enable apt-daily service..." &&
+  systemctl unmask apt-daily.service
+
+# finalise
+rm $0 &&
   sync &&
   reboot
 

@@ -4,6 +4,10 @@ PATH=/sbin:/usr/sbin:/bin:/usr/bin
 . /lib/init/vars.sh
 . /lib/lsb/init-functions
 
+# disable apt daily until fully bootstrapped
+log_daemon_msg "Disable apt-daily service..." &&
+  systemctl mask apt-daily.service
+
 # create ssh host keys if none exits
 [ ! -f /etc/ssh/ssh_host_rsa_key ] && dpkg-reconfigure openssh-server
 
