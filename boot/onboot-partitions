@@ -49,6 +49,7 @@ if [ -b /dev/sda ]; then
     echo "$UUID none swap defaults 0 0" >> /etc/fstab &&
     swapon /dev/sda1
 
+  # mount at /var and move existing /var over
   UUID=`blkid /dev/sda2 | awk '{print $2}' | sed 's/"//g'`
   log_daemon_msg "Moving /var to /dev/sda2..." &&
     mv /var /var.old && mkdir /var &&
@@ -56,19 +57,6 @@ if [ -b /dev/sda ]; then
     mount /dev/sda2 /var && cp -dpr /var.old/* /var
 
 fi
-
-# setup secondary usb disks
-for disk in `ls /dev/sd[b-z]`; do
-
-  # setup a single partition on the disk
-  log_daemon_msg "Partitioning ${disk}..." &&
-    printf "p\ng\nn\n1\n\n\n\n\np\nw" | fdisk ${disk}
-
-  # create an ext4 filesystem
-  log_daemon_msg "Formatting ext4 on ${disk}1..." &&
-    mkfs.ext4 -F "${disk}1"
-
-done
 
 # move to next stage
 mv /media/boot/onboot-packages $0 &&
