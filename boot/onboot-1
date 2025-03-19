@@ -1,9 +1,13 @@
 #! /bin/sh
 PATH=/sbin:/usr/sbin:/bin:/usr/bin
-export DEBIAN_FRONTEND="noninteractive"
 
 . /lib/init/vars.sh
 . /lib/lsb/init-functions
+
+# resize p2 as 16gigs and p3 as the rest
+p2_start=`fdisk -l /dev/mmcblk0 | grep mmcblk0p2 | awk '{print $2}'`
+log_daemon_msg "Repartitioning /dev/mmcblk0..." &&
+  printf "p\nd\n2\nn\np\n2\n$p2_start\n+16G\nn\np\n3\n\n\np\nw" | fdisk /dev/mmcblk0
 
 # resize the / partition
 if [ -b /dev/mmcblk0p2 ]; then
@@ -59,7 +63,6 @@ if [ -b /dev/sda ]; then
 fi
 
 # move to next stage
-mv /media/boot/onboot-packages $0 &&
+mv /media/boot/onboot-2 $0 &&
   sync &&
   reboot
-

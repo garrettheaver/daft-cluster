@@ -1,0 +1,13 @@
+[Unit]
+Description=Execute onboot script at startup after network is available
+ConditionFileIsExecutable=/media/boot/onboot
+Wants=network-online.target
+After=network.target network-online.target
+
+[Service]
+Type=simple
+RemainAfterExit=yes
+ExecStart=/media/boot/onboot
+
+[Install]
+WantedBy=default.targe

@@ -17,21 +17,25 @@ log_daemon_msg "Reinstalling ntp..." &&
   apt-get -y purge ntp &&
   apt-get -y install ntp
 
+# update the base install
+log_daemon_msg "Updating base packages..." &&
+  apt-get -y upgrade
+
 # all cluster nodes require the following packages
 log_daemon_msg "Installing essential packages..." &&
   apt-get -y install lxc aufs-tools cgroup-lite apparmor docker.io \
-  curl git-core python dnsutils
-
-# ensure nographics in server mode
-log_daemon_msg "Updating nographics..." &&
-  sed -i 's/setenv nographics "0"/setenv nographics "1"/g' /media/boot/boot.ini
+  curl git python-is-python2 dnsutils
 
 # re-enable apt daily service
 log_daemon_msg "Enable apt-daily service..." &&
   systemctl unmask apt-daily.service
 
+# setup the hostname to match the last part of the ip
+ip=`ip addr show eth0 | awk '/inet / {print $2}' | cut -d/ -f1 | cut -d. -f4`
+log_daemon_msg "Setting hostname to punk${ip}..." &&
+  echo "punk$ip" > /etc/hostname
+
 # finalise
 rm $0 &&
   sync &&
   reboot
-
