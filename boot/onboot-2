@@ -11,14 +11,13 @@ if [ -d /var.old ]; then
     rm -rf /var.old
 fi
 
-# ntp goes weird on systemd
-log_daemon_msg "Reinstalling ntp..." &&
-  apt-get update &&
-  apt-get -y purge ntp &&
-  apt-get -y install ntp
+# clear out older journal messages
+log_daemon_msg "Clearing out journal..." &&
+  journalctl --vacuum-time=1d
 
 # update the base install
 log_daemon_msg "Updating base packages..." &&
+  apt-get update &&
   apt-get -y upgrade
 
 # all cluster nodes require the following packages
@@ -29,11 +28,6 @@ log_daemon_msg "Installing essential packages..." &&
 # re-enable apt daily service
 log_daemon_msg "Enable apt-daily service..." &&
   systemctl unmask apt-daily.service
-
-# setup the hostname to match the last part of the ip
-ip=`ip addr show eth0 | awk '/inet / {print $2}' | cut -d/ -f1 | cut -d. -f4`
-log_daemon_msg "Setting hostname to punk${ip}..." &&
-  echo "punk$ip" > /etc/hostname
 
 # finalise
 rm $0 &&

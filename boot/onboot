@@ -4,10 +4,6 @@ PATH=/sbin:/usr/sbin:/bin:/usr/bin
 . /lib/init/vars.sh
 . /lib/lsb/init-functions
 
-# before first boot is irrelevant
-journalctl --vacuum-time=2d &&
-  log_daemon_msg "Journal cleaned..."
-
 # disable apt daily until fully bootstrapped
 log_daemon_msg "Disable apt-daily service..." &&
   systemctl mask apt-daily.service
@@ -18,6 +14,10 @@ log_daemon_msg "Disable apt-daily service..." &&
 # ensure nographics in server mode
 log_daemon_msg "Updating nographics..." &&
   sed -i 's/setenv nographics "0"/setenv nographics "1"/g' /media/boot/boot.ini
+
+# setup the hostname to pull from DHCP
+log_daemon_msg "Removing hostname config..." &&
+  rm /etc/hostname
 
 # move to next stage
 mv /media/boot/onboot-1 $0 &&

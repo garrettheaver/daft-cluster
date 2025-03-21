@@ -4,10 +4,9 @@ PATH=/sbin:/usr/sbin:/bin:/usr/bin
 . /lib/init/vars.sh
 . /lib/lsb/init-functions
 
-# resize p2 as 16gigs and p3 as the rest
-p2_start=`fdisk -l /dev/mmcblk0 | grep mmcblk0p2 | awk '{print $2}'`
+# resize p2 to remainder of /dev/mmcblk0
 log_daemon_msg "Repartitioning /dev/mmcblk0..." &&
-  printf "p\nd\n2\nn\np\n2\n$p2_start\n+16G\nn\np\n3\n\n\np\nw" | fdisk /dev/mmcblk0
+  printf "p\nd\n2\nn\np\n2\n\n\np\nw" | fdisk /dev/mmcblk0
 
 # resize the / partition
 if [ -b /dev/mmcblk0p2 ]; then
@@ -18,19 +17,6 @@ fi
 # mount /tmp as a tempfs
 log_daemon_msg "Mounting /tmp using tempfs..." &&
   echo "tmpfs /tmp tmpfs noatime,nosuid,nodev,noexec,mode=1777,size=512M 0 0" >> /etc/fstab
-
-# rest of sd card
-if [ -b /dev/mmcblk0p3 ]; then
-
-  log_daemon_msg "Formatting ext4 on /dev/mmcblk0p3..." &&
-    mkfs.ext4 -F /dev/mmcblk0p3
-
-  UUID=`blkid /dev/mmcblk0p3 | awk '{print $2}' | sed 's/"//g'`
-  log_daemon_msg "Adding /dev/mmcblk0p3 to fstab..." &&
-    mkdir -p /var/local/backups &&
-    echo "$UUID /var/local/backups ext4 errors=remount-ro,noatime 0 2" >> /etc/fstab
-
-fi
 
 # primary usb disk
 if [ -b /dev/sda ]; then
